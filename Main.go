@@ -15,13 +15,16 @@ import (
 )
 
 func scanPort(ip string, port int, workersCount int) {
-
-	_,  err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, port), 2*time.Second)
-	if (err == nil) {
+	_, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, port), 2*time.Second)
+	// Пытается установить TCP соединение
+	if err == nil {
 		println(port)
 	}
-	if port + workersCount < 65536 {
-		scanPort(ip, port + workersCount, workersCount)
+	// Если удаётся, печатает этот порт
+	if port+workersCount < 65536 {
+		// В конце запускается на сканирование другого порта, остаток которого по модулю
+		// количества горутинов равен номеру горутина.
+		scanPort(ip, port+workersCount, workersCount)
 	}
 }
 func scanPortWg(ip string, port int, workersCount int, wg *sync.WaitGroup) {
@@ -32,9 +35,10 @@ func scanPortWg(ip string, port int, workersCount int, wg *sync.WaitGroup) {
 func main() {
 	ip := os.Args[1]
 	var wg sync.WaitGroup
-	for i := 1; i < 2000; i++ {
+	for i := 1; i < 2000; i++ { // Делает 2000 горутинов
 		wg.Add(1)
-		go scanPortWg(ip, i, 2000, &wg)
+		go scanPortWg(ip, i, 2000, &wg) // У каждого горутина запускает сканирование
+		//начиная с порта i
 	}
 	wg.Wait()
 }
